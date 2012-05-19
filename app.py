@@ -15,7 +15,7 @@ def checkin_push():
         checkin = json.loads(request.form['checkin'])
         client = TwilioRestClient(os.environ['TWILIO_ACCOUNT'], os.environ['TWILIO_TOKEN'])
         client.sms.messages.create(to=os.environ['MY_CELL'], from_=os.environ['TWILIO_OUTGOING'],
-            body='Hello there, %s!' % (checkin['user']))
+            body='Hello there, %s %s!' % (checkin['user']['firstName'], checkin['lastName']))
         return "Checkin push received successfully", 200
     else:
         return "Invalid push secret", 401
