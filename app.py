@@ -10,12 +10,9 @@ def hello():
 @app.route('/foursquare/push', methods=['POST'])
 def checkin_push():
     if request.method == 'POST':
-        app.logger.error('received a post')
-        app.logger.error(request.form['secret'])
-        app.logger.error(request.form['checkin'])
-    else:
-        app.logger.error('not a post')
-    return 'ok'
+        print '   received a post'
+        print request.form['secret']
+        print request.form['checkin']
 
 if __name__ == '__main__':
     # Bind to PORT if defined, otherwise default to 5000.
