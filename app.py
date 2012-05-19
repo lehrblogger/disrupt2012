@@ -12,10 +12,12 @@ def hello():
     
 @app.route('/foursquare/push', methods=['POST'])
 def checkin_push():
-    logging.warning('   received a post')
-    logging.warning(request.form['secret'])
-    logging.warning(request.form['checkin'])
-
+    if request.form['secret'] == os.environ['PUSH_SECRET']:
+        logging.info(request.form['checkin'])
+        return "Checkin push received successfully", 200
+    else:
+        return "Invalid push secret", 401
+        
 if __name__ == '__main__':
     # Bind to PORT if defined, otherwise default to 5000.
     port = int(os.environ.get('PORT', 5000))
