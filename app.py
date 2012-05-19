@@ -16,17 +16,22 @@ def checkin_push():
         conn = None
         try:
             checkin = json.loads(request.form['checkin'])
+            logging.info('got checkin')
             conn = psycopg2.connect(host=os.environ['DB_HOST'], database=os.environ['DB_NAME'], user=os.environ['DB_USER'], password=os.environ['DB_PASSWORD'], sslmode='require')
+            logging.info('connected to DB')
             cur = conn.cursor()
-            cur.execute("SELECT  FROM users WHERE foursquare_id=%s;", (checkin['user']['id']))
+            cur.execute("SELECT numbers FROM users WHERE foursquare_id=%s;", (checkin['user']['id']))
             numbers = cur.fetchone()
+            logging.info('got numbers %s' % numbers)
             conn.close()
             client = TwilioRestClient(os.environ['TWILIO_ACCOUNT'], os.environ['TWILIO_TOKEN'])
+            logging.info('got twilio')
             for number in numbers[0].split(','):
                 client.sms.messages.create(to='+1%s' % number, from_=os.environ['TWILIO_OUTGOING'],
                     body='Hello there, %s %s!' % (checkin['user']['firstName'], checkin['user']['lastName']))
             return 'Checkin push received successfully', 200
-        except:
+        except e:
+            logging.error("Error processing checkin: %s" % e)
             if conn: conn.close()
             return 'Internal server error', 500
     return 'Invalid push secret', 401
