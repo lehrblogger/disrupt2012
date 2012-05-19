@@ -3,6 +3,7 @@ import os
 from flask import Flask, request
 import simplejson as json
 from twilio.rest import TwilioRestClient
+import psycopg2
 app = Flask(__name__)
 
 @app.route('/')
@@ -12,13 +13,23 @@ def hello():
 @app.route('/foursquare/push', methods=['POST'])
 def checkin_push():
     if request.form['secret'] == os.environ['PUSH_SECRET']:
-        checkin = json.loads(request.form['checkin'])
-        client = TwilioRestClient(os.environ['TWILIO_ACCOUNT'], os.environ['TWILIO_TOKEN'])
-        client.sms.messages.create(to=os.environ['MY_CELL'], from_=os.environ['TWILIO_OUTGOING'],
-            body='Hello there, %s %s!' % (checkin['user']['firstName'], checkin['user']['lastName']))
-        return "Checkin push received successfully", 200
-    else:
-        return "Invalid push secret", 401
+        conn = None
+        try:
+            checkin = json.loads(request.form['checkin'])
+            conn = psycopg2.connect(host=os.environ['DB_HOST'], database=os.environ['DB_NAME'], user=os.environ['DB_USER'], password=os.environ['DB_PASSWORD'], sslmode='require')
+            cur = conn.cursor()
+            cur.execute("SELECT  FROM users WHERE foursquare_id=%s;", (checkin['user']['id']))
+            numbers = cur.fetchone()
+            conn.close()
+            client = TwilioRestClient(os.environ['TWILIO_ACCOUNT'], os.environ['TWILIO_TOKEN'])
+            for number in numbers[0].split(','):
+                client.sms.messages.create(to='+1%s' % number, from_=os.environ['TWILIO_OUTGOING'],
+                    body='Hello there, %s %s!' % (checkin['user']['firstName'], checkin['user']['lastName']))
+            return 'Checkin push received successfully', 200
+        except:
+            if conn: conn.close()
+            return 'Internal server error', 500
+    return 'Invalid push secret', 401
         
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,
