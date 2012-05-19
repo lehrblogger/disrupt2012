@@ -1,19 +1,21 @@
 import logging
 import os
-from flask import request
-
-from flask import Flask
+from flask import Flask, request
+import simplejson as json
+from twilio.rest import TwilioRestClient
 app = Flask(__name__)
 
 @app.route('/')
 def hello():
-    logging.warning('ok')
     return 'Hello World!'
     
 @app.route('/foursquare/push', methods=['POST'])
 def checkin_push():
     if request.form['secret'] == os.environ['PUSH_SECRET']:
-        logging.info(request.form['checkin'])
+        checkin = json.loads(request.form['checkin'])
+        client = TwilioRestClient(os.environ['TWILIO_ACCOUNT'], os.environ['TWILIO_TOKEN'])
+        client.sms.messages.create(to=os.environ['MY_CELL'], from_=os.environ['TWILIO_OUTGOING'],
+            body='Hello there, %s!' % (checkin['user']))
         return "Checkin push received successfully", 200
     else:
         return "Invalid push secret", 401

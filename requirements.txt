@@ -1,8 +1,11 @@
 Flask==0.8
 Jinja2==2.6
+PyJWT==0.1.2
 Werkzeug==0.8.3
 distribute==0.6.24
 foursquare==20120430
 httplib2==0.7.4
 poster==0.8.1
+simplejson==2.5.2
+twilio==3.3.6
 wsgiref==0.1.2
