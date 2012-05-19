@@ -30,7 +30,7 @@ def checkin_push():
                 client.sms.messages.create(to='+1%s' % number, from_=os.environ['TWILIO_OUTGOING'],
                     body='Hello there, %s %s!' % (checkin['user']['firstName'], checkin['user']['lastName']))
             return 'Checkin push received successfully', 200
-        except Error, e:
+        except Exception, e:
             logging.error("Error processing checkin: %s" % e)
             if conn: conn.close()
             return 'Internal server error', 500
