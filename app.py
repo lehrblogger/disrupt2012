@@ -15,15 +15,19 @@ def hello():
 def checkin_push():
     if request.form['secret'] == os.environ['PUSH_SECRET']:
         conn = None
-        try:
             checkin = json.loads(request.form['checkin'])
             logging.info(checkin)
             if 'shout' in checkin and (checkin['shout'].find('#posse') >= 0 or checkin['shout'].find('#p0sse') >= 0):
-                conn = psycopg2.connect(host=os.environ['DB_HOST'], database=os.environ['DB_NAME'], user=os.environ['DB_USER'], password=os.environ['DB_PASSWORD'], sslmode='require')
-                cur = conn.cursor()
-                cur.execute("SELECT nickname, numbers FROM users WHERE foursquare_id=%s;", (checkin['user']['id']))
-                result = cur.fetchone()
-                conn.close()
+                try:
+                    conn = psycopg2.connect(host=os.environ['DB_HOST'], database=os.environ['DB_NAME'], user=os.environ['DB_USER'], password=os.environ['DB_PASSWORD'], sslmode='require')
+                    cur = conn.cursor()
+                    cur.execute("SELECT nickname, numbers FROM users WHERE foursquare_id=%s;", (checkin['user']['id']))
+                    result = cur.fetchone()
+                    conn.close()
+                except Exception, e:
+                    logging.error("Database error: %s" % e)
+                    if conn: conn.close()
+                    return 'Internal server error', 500
                 logging.info(result)
                 if result and result[1]:
                     client = TwilioRestClient(os.environ['TWILIO_ACCOUNT'], os.environ['TWILIO_TOKEN'])
@@ -39,11 +43,6 @@ def checkin_push():
                         except TwilioRestException, e:
                             logging.error("Error sending message with Twilio to number %s for user %s: %s" % (number, checkin['user']['id'], e))
             return 'Checkin push received successfully', 200
-        except Exception, e:
-            logging.error("Error processing checkin: %s" % e)
-            if conn: conn.close()
-            raise e
-            return 'Internal server error', 500 
     return 'Invalid push secret', 401
         
 if __name__ == '__main__':
