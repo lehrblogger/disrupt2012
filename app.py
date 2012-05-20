@@ -2,7 +2,8 @@ import logging
 import os
 from flask import Flask, request
 import simplejson as json
-from twilio.rest import TwilioRestClient, TwilioRestException
+from twilio import TwilioRestException
+from twilio.rest import TwilioRestClient
 import psycopg2
 app = Flask(__name__)
 
@@ -34,7 +35,7 @@ def checkin_push():
         except Exception, e:
             logging.error("Error processing checkin: %s" % e)
             if conn: conn.close()
-            return 'Internal server error', 500
+            return 'Internal server error', 500 
     return 'Invalid push secret', 401
         
 if __name__ == '__main__':
