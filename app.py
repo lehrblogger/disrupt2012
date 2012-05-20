@@ -28,11 +28,12 @@ def checkin_push():
             logging.info('got twilio')
             for number in numbers[0].split(','):
                 client.sms.messages.create(to='+1%s' % number, from_=os.environ['TWILIO_OUTGOING'],
-                    body='Hello there, %s %s!' % (checkin['user']['firstName'], checkin['user']['lastName']))
+                    body='%s %s just checked in to %s. Why don\'t you head there now?' % (checkin['user']['firstName'], checkin['user']['lastName'], checkin['user']['venue']['name']))
             return 'Checkin push received successfully', 200
         except Exception, e:
             logging.error("Error processing checkin: %s" % e)
             if conn: conn.close()
+            raise e
             return 'Internal server error', 500
     return 'Invalid push secret', 401
         
