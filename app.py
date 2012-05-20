@@ -21,7 +21,7 @@ def checkin_push():
             logging.info('shout' in checkin)
             logging.info(checkin['shout'].find('#posse'))
             logging.info(checkin['shout'].find('#p0sse'))
-            if 'shout' in checkin and (checkin['shout'].find('#posse') > 0 or checkin['shout'].find('#p0sse') > 0):
+            if 'shout' in checkin and (checkin['shout'].find('#posse') >= 0 or checkin['shout'].find('#p0sse') >= 0):
                 conn = psycopg2.connect(host=os.environ['DB_HOST'], database=os.environ['DB_NAME'], user=os.environ['DB_USER'], password=os.environ['DB_PASSWORD'], sslmode='require')
                 cur = conn.cursor()
                 cur.execute("SELECT nickname, numbers FROM users WHERE foursquare_id=%s;", (checkin['user']['id']))
