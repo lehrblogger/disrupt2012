@@ -36,10 +36,10 @@ def checkin_push():
                 client = TwilioRestClient(os.environ['TWILIO_ACCOUNT'], os.environ['TWILIO_TOKEN'])
                 if nickname:
                     message = '%s just checked in to %s at %s. Why don\'t you head there now?' % \
-                        (nickname, checkin['venue']['name'], checkin['venue']['address'])
+                        (nickname, checkin['venue']['name'], checkin['venue']['location']['address'])
                 else:
                     message = '%s %s just checked in to %s at %s. Why don\'t you head there now?' % \
-                        (checkin['user']['firstName'], checkin['user']['lastName'], checkin['venue']['name'], checkin['venue']['address'])
+                        (checkin['user']['firstName'], checkin['user']['lastName'], checkin['venue']['name'], checkin['venue']['location']['address'])
                 for number in numbers.split(','):
                     try:
                         client.sms.messages.create(to='+1%s' % number, from_=os.environ['TWILIO_OUTGOING'], body=message)
