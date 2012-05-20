@@ -2,7 +2,7 @@ import logging
 import os
 from flask import Flask, request
 import simplejson as json
-from twilio.rest import TwilioRestClient
+from twilio.rest import TwilioRestClient, TwilioRestException
 import psycopg2
 app = Flask(__name__)
 
@@ -16,25 +16,24 @@ def checkin_push():
         conn = None
         try:
             checkin = json.loads(request.form['checkin'])
-            logging.info('got checkin')
             conn = psycopg2.connect(host=os.environ['DB_HOST'], database=os.environ['DB_NAME'], user=os.environ['DB_USER'], password=os.environ['DB_PASSWORD'], sslmode='require')
-            logging.info('connected to DB')
             cur = conn.cursor()
             cur.execute("SELECT numbers FROM users WHERE foursquare_id=%s;", (checkin['user']['id']))
             numbers = cur.fetchone()
-            logging.info('got numbers %s' % numbers)
             conn.close()
             if numbers:
                 client = TwilioRestClient(os.environ['TWILIO_ACCOUNT'], os.environ['TWILIO_TOKEN'])
-                logging.info('got twilio')
                 for number in numbers[0].split(','):
-                    client.sms.messages.create(to='+1%s' % number, from_=os.environ['TWILIO_OUTGOING'],
-                        body='%s %s just checked in to %s. Why don\'t you head there now?' % (checkin['user']['firstName'], checkin['user']['lastName'], checkin['venue']['name']))
+                    try:
+                        client.sms.messages.create(to='+1%s' % number, from_=os.environ['TWILIO_OUTGOING'],
+                            body='%s %s just checked in to %s at %s. Why don\'t you head there now?' %
+                            (checkin['user']['firstName'], checkin['user']['lastName'], checkin['venue']['name'], checkin['venue']['address']))
+                    except TwilioRestException, e:
+                        logging.error("Error sending message with Twilio to number %s for user %s: %s" % (number, checkin['user']['id'], e))
             return 'Checkin push received successfully', 200
         except Exception, e:
             logging.error("Error processing checkin: %s" % e)
             if conn: conn.close()
-            raise e
             return 'Internal server error', 500
     return 'Invalid push secret', 401
         
