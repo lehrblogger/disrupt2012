@@ -37,7 +37,7 @@ def checkin_push():
                     name_str = "%s %s" % (checkin['user']['firstName'], checkin['user']['lastName'])
                 if 'location' in checkin['venue'] and 'address' in checkin['venue']['location']:
                     address_str = ' at %s' % (checkin['venue']['location']['address'])
-                message = '%s just checked in to %s%s - why don\'t you head there now?' % (name_str, checkin['venue']['name'], address_str)
+                message = '%s just checked in to %s%s\n\nWhy don\'t you head there now?' % (name_str, checkin['venue']['name'], address_str)
                 for number in numbers.split(','):
                     try:
                         client.sms.messages.create(to='+1%s' % number, from_=os.environ['TWILIO_OUTGOING'], body=message)
