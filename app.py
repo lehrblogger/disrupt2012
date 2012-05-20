@@ -19,17 +19,17 @@ def checkin_push():
         logging.info(checkin)
         if 'shout' in checkin and (checkin['shout'].find('#posse') >= 0 or checkin['shout'].find('#p0sse') >= 0):
             logging.info(checkin['user']['id'])
-            # try:
-            conn = psycopg2.connect(host=os.environ['DB_HOST'], database=os.environ['DB_NAME'], user=os.environ['DB_USER'], password=os.environ['DB_PASSWORD'], sslmode='require')
-            cur = conn.cursor()
-            cur.execute("SELECT nickname, numbers FROM users WHERE foursquare_id=%s;", (checkin['user']['id']))
-            nickname, numbers = cur.fetchone()
-            conn.close()
-            # except Exception, e:
-            #     logging.error("Database error: %s" % e)
-            #     if conn: conn.close()
-            #     raise e
-            #     return 'Internal server error', 500
+            try:
+                conn = psycopg2.connect(host=os.environ['DB_HOST'], database=os.environ['DB_NAME'], user=os.environ['DB_USER'], password=os.environ['DB_PASSWORD'], sslmode='require')
+                cur = conn.cursor()
+                cur.execute("SELECT nickname, numbers FROM users WHERE foursquare_id=%(id)s;", {'id': checkin['user']['id']})
+                nickname, numbers = cur.fetchone()
+                conn.close()
+            except Exception, e:
+                logging.error("Database error: %s" % e)
+                if conn: conn.close()
+                raise e
+                return 'Internal server error', 500
             logging.info(nickname)    
             logging.info(numbers)
             if numbers:
