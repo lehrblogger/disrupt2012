@@ -16,9 +16,7 @@ def checkin_push():
     if request.form['secret'] == os.environ['PUSH_SECRET']:
         conn = None
         checkin = json.loads(request.form['checkin'])
-        logging.info(checkin)
         if 'shout' in checkin and (checkin['shout'].find('#posse') >= 0 or checkin['shout'].find('#p0sse') >= 0):
-            logging.info(checkin['user']['id'])
             try:
                 conn = psycopg2.connect(host=os.environ['DB_HOST'], database=os.environ['DB_NAME'], user=os.environ['DB_USER'], password=os.environ['DB_PASSWORD'], sslmode='require')
                 cur = conn.cursor()
@@ -28,18 +26,16 @@ def checkin_push():
             except Exception, e:
                 logging.error("Database error: %s" % e)
                 if conn: conn.close()
-                raise e
                 return 'Internal server error', 500
-            logging.info(nickname)    
-            logging.info(numbers)
             if numbers:
                 client = TwilioRestClient(os.environ['TWILIO_ACCOUNT'], os.environ['TWILIO_TOKEN'])
                 if nickname:
-                    message = '%s just checked in to %s at %s. Why don\'t you head there now?' % \
-                        (nickname, checkin['venue']['name'], checkin['venue']['location']['address'])
+                    name_str = nickname
                 else:
-                    message = '%s %s just checked in to %s at %s. Why don\'t you head there now?' % \
-                        (checkin['user']['firstName'], checkin['user']['lastName'], checkin['venue']['name'], checkin['venue']['location']['address'])
+                    name_str = "%s %s" % (checkin['user']['firstName'], checkin['user']['lastName'])
+                if 'location' in checkin['venue'] and 'address' in checkin['venue']['location']:
+                    address_str = ' at %s' % (checkin['venue']['location']['address'])
+                message = '%s just checked in to %s%s. Why don\'t you head there now?' % (name_str, checkin['venue']['name'], address_str)
                 for number in numbers.split(','):
                     try:
                         client.sms.messages.create(to='+1%s' % number, from_=os.environ['TWILIO_OUTGOING'], body=message)
